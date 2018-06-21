@@ -149,6 +149,8 @@ class OrdinaryKriging:
     """
 
     eps = 1.e-10   # Cutoff for comparison to zero
+
+    # TODO MLR Move the following to variogram_models.
     variogram_dict = {'linear': variogram_models.linear_variogram_model,
                       'power': variogram_models.power_variogram_model,
                       'gaussian': variogram_models.gaussian_variogram_model,
