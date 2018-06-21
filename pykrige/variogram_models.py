@@ -38,12 +38,31 @@ class variogram_model(object):
                  ):
         self.name            = function.__name__
         self.function        = function
+        # not quite sure how parameters will be used
         self.parameters      = parameters
+        # an ordered list of parameter names
         self.parameter_names = parameter_names
+        # The bounds on the parameter values when searching
         self.bnds            = bnds
+        # The initial guess of parameter values to seed searches
         self.x0              = x0
         return
-    
+    def string(self,parameters=None):
+        """Return a formatted string serializing the variogram_model."""
+        ret_str = "Variogram Model: " + self.name + '\n'
+        if parameters is not None:
+            k=0
+            for names in self.parameter_names:
+                ret_str = ret_str + names + ": " + str(parameters[k]) + '\n'
+                k=k+1
+        else:
+            for names in self.parameter_names:
+                ret_str = ret_str + names + ": None" + '\n'
+                ret_str = ret_str + "bnds:            " + str(self.bnds)  + '\n'
+                ret_str = ret_str + "x0:              " + str(self.x0)  + '\n'
+                ret_str = ret_str + "self.parameters: " + str(self.parameters)  + '\n'
+        return ret_str
+                
 ###
 
 variogram_models={}

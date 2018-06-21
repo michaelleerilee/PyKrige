@@ -253,13 +253,19 @@ class OrdinaryKriging:
                 print("Nugget:", self.variogram_model_parameters[2], '\n')
             elif self.variogram_model == 'custom':
                 print("Using Custom Variogram Model")
+            elif self.variogram_model in variogram_models.variogram_models:
+                print(variogram_models\
+                      .variogram_models[self.variogram_model]\
+                      .string(self.variogram_model_parameters))
             else:
+                # <MLR SIGH/>
                 print("Using '%s' Variogram Model" % self.variogram_model)
                 print("Partial Sill:", self.variogram_model_parameters[0])
                 print("Full Sill:", self.variogram_model_parameters[0] +
                       self.variogram_model_parameters[2])
                 print("Range:", self.variogram_model_parameters[1])
                 print("Nugget:", self.variogram_model_parameters[2], '\n')
+                
         if self.enable_plotting:
             self.display_variogram_model()
 
