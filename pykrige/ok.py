@@ -154,7 +154,9 @@ class OrdinaryKriging:
                       'gaussian': variogram_models.gaussian_variogram_model,
                       'spherical': variogram_models.spherical_variogram_model,
                       'exponential': variogram_models.exponential_variogram_model,
-                      'hole-effect': variogram_models.hole_effect_variogram_model}
+                      'hole-effect': variogram_models.hole_effect_variogram_model,
+                      'gamma_rayleigh_nuggetless_variogram_model': variogram_models.gamma_rayleigh_nuggetless_variogram_model
+    }
 
     def __init__(self, x, y, z, variogram_model='linear',
                  variogram_parameters=None, variogram_function=None, nlags=6,

@@ -26,6 +26,8 @@ References
 Copyright (c) 2015-2018, PyKrige Developers
 """
 
+from . import variogram_models as vm
+
 import numpy as np
 from scipy.spatial.distance import pdist, squareform, cdist
 from scipy.optimize import least_squares
@@ -356,12 +358,22 @@ def _make_variogram_parameter_list(variogram_model, variogram_model_parameters):
 
             parameter_list = variogram_model_parameters
 
+        elif variogram_model in ['gamma_rayleigh_nuggetless_variogram_model']:
+            if len(variogram_model_parameters) != len(vm.variogram_models[variogram_model].parameter_names):
+                raise ValueError("Variogram model parameter list must have "
+                                 "exactly %s entries when variogram model "
+                                 "set to '%s'." % str(len(vm.variogram_models[variogram_model].parameter_names)),variogram_model)
+
+            parameter_list = variogram_model_parameters
+
         else:
 
             raise ValueError("Specified variogram model must be one of the "
                              "following: 'linear', 'power', 'gaussian', "
                              "'spherical', 'exponential', 'hole-effect', "
-                             "'custom'.")
+                             "'custom'."
+                             " Also 'gamma_rayleigh_nuggetless_variogram_model'."
+            )
 
     else:
 
@@ -598,6 +610,9 @@ def _calculate_variogram_model(lags, semivariance, variogram_model,
         x0 = [(np.amax(semivariance) - np.amin(semivariance)) /
               (np.amax(lags) - np.amin(lags)), 1.1, np.amin(semivariance)]
         bnds = ([0., 0.001, 0.], [np.inf, 1.999, np.amax(semivariance)])
+    elif variogram_model == 'gamma_rayleigh_nuggetless_variogram_model':
+        x0   = vm.variogram_models['gamma_rayleigh_nuggetless_variogram_model'].x0()
+        bnds = vm.variogram_models['gamma_rayleigh_nuggetless_variogram_model'].bnds()
     else:
         x0 = [np.amax(semivariance) - np.amin(semivariance),
               0.25*np.amax(lags), np.amin(semivariance)]
