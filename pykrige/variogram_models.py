@@ -192,3 +192,33 @@ _add_model(
                     ,parameter_names  = ['sill','falloff','beta']
                     ,bnds             = gamma_rayleigh_nuggetless_variogram_model_bnds
                     ,x0               = gamma_rayleigh_nuggetless_variogram_model_x0))
+
+def gamma_rayleigh_variogram_model(m,d):
+    sill    = np.float(m[0])
+    falloff = np.float(m[1])
+    beta    = np.float(m[2])
+    nugget  = np.float(m[3])
+    fd      = falloff*d
+    omfd    = 1.0-falloff*d
+    bfd2    = beta*omfd*omfd
+    return  sill*fd*np.exp(omfd-bfd2) + nugget
+
+def gamma_rayleigh_variogram_model_bnds(lags=None,semivariance=None):
+    return ([0.0,0.0,0.0,0.0], [1000.0,10.0,10.0,10.0])
+    
+def gamma_rayleigh_variogram_model_x0(lags=None,semivariance=None):
+    return [2.0,0.01,0.0001,0.0]
+    
+_add_model(
+    variogram_model(function          = gamma_rayleigh_variogram_model
+                    ,parameter_names  = ['sill','falloff','beta','nugget']
+                    ,bnds             = gamma_rayleigh_variogram_model_bnds
+                    ,x0               = gamma_rayleigh_variogram_model_x0))
+
+# Legacy Compatibility
+legacy_names = ['linear','power','gaussian','spherical','exponential']
+for n in legacy_names:
+    variogram_models[n] = variogram_models[n+'_variogram_model']
+variogram_models['hole-effect'] = variogram_models['hole_effect_variogram_model']
+
+

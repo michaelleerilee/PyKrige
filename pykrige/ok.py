@@ -150,15 +150,19 @@ class OrdinaryKriging:
 
     eps = 1.e-10   # Cutoff for comparison to zero
 
-    # TODO MLR Move the following to variogram_models.
-    variogram_dict = {'linear': variogram_models.linear_variogram_model,
-                      'power': variogram_models.power_variogram_model,
-                      'gaussian': variogram_models.gaussian_variogram_model,
-                      'spherical': variogram_models.spherical_variogram_model,
-                      'exponential': variogram_models.exponential_variogram_model,
-                      'hole-effect': variogram_models.hole_effect_variogram_model,
-                      'gamma_rayleigh_nuggetless_variogram_model': variogram_models.gamma_rayleigh_nuggetless_variogram_model
-    }
+    # # TODO MLR Move the following to variogram_models.
+    # variogram_dict = {'linear': variogram_models.linear_variogram_model,
+    #                   'power': variogram_models.power_variogram_model,
+    #                   'gaussian': variogram_models.gaussian_variogram_model,
+    #                   'spherical': variogram_models.spherical_variogram_model,
+    #                   'exponential': variogram_models.exponential_variogram_model,
+    #                   'hole-effect': variogram_models.hole_effect_variogram_model,
+    #                   'gamma_rayleigh_nuggetless_variogram_model': variogram_models.gamma_rayleigh_nuggetless_variogram_model
+    # }
+
+    variogram_dict = {}
+    for m in variogram_models.variogram_models.keys():
+        variogram_dict[m] = variogram_models.variogram_models[m].function
 
     def __init__(self, x, y, z, variogram_model='linear',
                  variogram_parameters=None, variogram_function=None, nlags=6,
@@ -462,7 +466,9 @@ class OrdinaryKriging:
         else:
             raise ValueError("Only 'euclidean' and 'geographic' are valid "
                              "values for coordinates-keyword.")            
-            
+
+        print('_get_kriging_matrix mnmx(d): ',np.nanmin(d),np.nanmax(d))
+        
         a = np.zeros((n+1, n+1))
         a[:n, :n] = - self.variogram_function(self.variogram_model_parameters,
                                               d)

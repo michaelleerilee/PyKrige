@@ -358,7 +358,7 @@ def _make_variogram_parameter_list(variogram_model, variogram_model_parameters):
 
             parameter_list = variogram_model_parameters
 
-        elif variogram_model in ['gamma_rayleigh_nuggetless_variogram_model']:
+        elif variogram_model in vm.variogram_models.keys():
             if len(variogram_model_parameters) != len(vm.variogram_models[variogram_model].parameter_names):
                 raise ValueError("Variogram model parameter list must have "
                                  "exactly %s entries when variogram model "
@@ -610,9 +610,9 @@ def _calculate_variogram_model(lags, semivariance, variogram_model,
         x0 = [(np.amax(semivariance) - np.amin(semivariance)) /
               (np.amax(lags) - np.amin(lags)), 1.1, np.amin(semivariance)]
         bnds = ([0., 0.001, 0.], [np.inf, 1.999, np.amax(semivariance)])
-    elif variogram_model == 'gamma_rayleigh_nuggetless_variogram_model':
-        x0   = vm.variogram_models['gamma_rayleigh_nuggetless_variogram_model'].x0()
-        bnds = vm.variogram_models['gamma_rayleigh_nuggetless_variogram_model'].bnds()
+    elif variogram_model in vm.variogram_models.keys():
+        x0   = vm.variogram_models[variogram_model].x0()
+        bnds = vm.variogram_models[variogram_model].bnds()
     else:
         x0 = [np.amax(semivariance) - np.amin(semivariance),
               0.25*np.amax(lags), np.amin(semivariance)]
