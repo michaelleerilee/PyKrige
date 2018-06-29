@@ -1,5 +1,5 @@
 __author__ = 'Benjamin S. Murphy'
-__version__ = '1.4.0'
+__version__ = '1.4.0.NOGGIn.0'
 __doc__ = """
 PyKrige
 =======
@@ -41,6 +41,11 @@ References
     Hydrogeology, (Cambridge University Press, 1997) 272 p.
 
 Copyright (c) 2015-2018, PyKrige Developers
+
+===========================================
+
+2018-0629-1509-26-EDT ADAPTED FOR NOGGIN by ML Rilee <mike@rilee.net> Rilee Systems Technologies LLC
+
 """
 
 from . import kriging_tools as kt  # noqa

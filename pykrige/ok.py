@@ -467,7 +467,8 @@ class OrdinaryKriging:
             raise ValueError("Only 'euclidean' and 'geographic' are valid "
                              "values for coordinates-keyword.")            
 
-        print('_get_kriging_matrix mnmx(d): ',np.nanmin(d),np.nanmax(d))
+        if self.verbose:
+            print('_get_kriging_matrix mnmx(d): ',np.nanmin(d),np.nanmax(d))
         
         a = np.zeros((n+1, n+1))
         a[:n, :n] = - self.variogram_function(self.variogram_model_parameters,
