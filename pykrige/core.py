@@ -611,8 +611,8 @@ def _calculate_variogram_model(lags, semivariance, variogram_model,
               (np.amax(lags) - np.amin(lags)), 1.1, np.amin(semivariance)]
         bnds = ([0., 0.001, 0.], [np.inf, 1.999, np.amax(semivariance)])
     elif variogram_model in vm.variogram_models.keys():
-        x0   = vm.variogram_models[variogram_model].x0()
-        bnds = vm.variogram_models[variogram_model].bnds()
+        x0   = vm.variogram_models[variogram_model].x0(lags=lags,semivariance=semivariance)
+        bnds = vm.variogram_models[variogram_model].bnds(lags=lags,semivariance=semivariance)
     else:
         x0 = [np.amax(semivariance) - np.amin(semivariance),
               0.25*np.amax(lags), np.amin(semivariance)]
