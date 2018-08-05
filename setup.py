@@ -13,7 +13,8 @@ from setuptools import setup, Extension
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
 
-NAME = 'PyKrige'
+NAME = 'PyKrige-NOGGIn'
+# VERSION = '1.4.0'
 VERSION = '1.4.0'
 AUTHOR = 'Benjamin S. Murphy'
 EMAIL = 'bscott.murphy@gmail.com'

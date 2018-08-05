@@ -201,6 +201,7 @@ class OrdinaryKriging:
                                        [self.XCENTER, self.YCENTER],
                                        [self.anisotropy_scaling],
                                        [self.anisotropy_angle]).T
+            self.XY_PACKED=None
         elif coordinates_type == 'geographic':
             # Leave everything as is in geographic case.
             # May be open to discussion?
@@ -214,6 +215,7 @@ class OrdinaryKriging:
             self.anisotropy_angle = 0.0
             self.X_ADJUSTED = self.X_ORIG
             self.Y_ADJUSTED = self.Y_ORIG
+            self.XY_PACKED  = self.X_ADJUSTED + 1j*self.Y_ADJUSTED
         else:
             raise ValueError("Only 'euclidean' and 'geographic' are valid "
                              "values for coordinates_type-keyword.")
@@ -346,6 +348,7 @@ class OrdinaryKriging:
                 self.anisotropy_angle = 0.0
                 self.X_ADJUSTED = self.X_ORIG
                 self.Y_ADJUSTED = self.Y_ORIG
+                self.XY_PACKED  = self.X_ADJUSTED + 1j * self.Y_ADJUSTED
 
         self.variogram_model = variogram_model
         if self.variogram_model not in self.variogram_dict.keys() and self.variogram_model != 'custom':
@@ -358,7 +361,7 @@ class OrdinaryKriging:
         else:
             self.variogram_function = self.variogram_dict[self.variogram_model]
         if self.verbose:
-            print("Updating variogram mode...")
+            print("Updating variogram model...")
 
         # See note above about the 'use_psill' kwarg...
         vp_temp = _make_variogram_parameter_list(self.variogram_model,
@@ -408,6 +411,7 @@ class OrdinaryKriging:
             print("Q2 =", self.Q2)
             print("cR =", self.cR, '\n')
 
+    # TODO Add capabilities to save to file, toggle plt.show().
     def display_variogram_model(self):
         """Displays variogram model with the actual binned data."""
         fig = plt.figure()
@@ -453,16 +457,20 @@ class OrdinaryKriging:
         print("Q2 =", self.Q2)
         print("cR =", self.cR)
 
-    def _get_kriging_matrix(self, n, xy=None, coordinates='euclidean'):
+    def _get_kriging_matrix(self, n):
+        # , xy=None, coordinates='euclidean'):
         """Assembles the kriging matrix."""
-
         
-        if coordinates == 'euclidean':
+        if self.coordinates_type == 'euclidean':
+            # print('gkm: 100 euclidean')
+            # Akin to the xy_data
             xy = np.concatenate((self.X_ADJUSTED[:, np.newaxis],
                                  self.Y_ADJUSTED[:, np.newaxis]), axis=1)
             d = cdist(xy, xy, 'euclidean')
-        elif coordinates == 'geographic':
-            d = core.great_circle_distance_c(xy[:,np.newaxis],xy)
+        elif self.coordinates_type == 'geographic':
+            # print('gkm: 200 geographic')
+            # xy_c   = self.X_ADJUSTED + 1j*self.Y_ADJUSTED
+            d = core.great_circle_distance_c(self.XY_PACKED[:,np.newaxis],self.XY_PACKED)
         else:
             raise ValueError("Only 'euclidean' and 'geographic' are valid "
                              "values for coordinates-keyword.")            
@@ -484,16 +492,27 @@ class OrdinaryKriging:
         """Solves the kriging system as a vectorized operation. This method
         can take a lot of memory for large grids and/or large datasets."""
 
+        #mlr print('exec_vector')
+        
         npt = bd.shape[0]
         n = self.X_ADJUSTED.shape[0]
         zero_index = None
         zero_value = False
 
-        a_inv = scipy.linalg.inv(a)
+        #mlr print('_exec_vector: det(a): '+str(scipy.linalg.det(a)))
+
+        #if np.inf in a:
+        #    print('exec_vector: inf in a')
+
+        #mlr- a_inv = scipy.linalg.inv(a)
+        #mlr- 
+        #mlr- if np.inf in a_inv:
+        #mlr-     print('exec_vector: inf in a_inv')
 
         if np.any(np.absolute(bd) <= self.eps):
             zero_value = True
             zero_index = np.where(np.absolute(bd) <= self.eps)
+        #    print('exec_vector: zero_index.size: '+str(zero_index.size))
 
         b = np.zeros((npt, n+1, 1))
         b[:, :n, 0] = - self.variogram_function(self.variogram_model_parameters, bd)
@@ -501,11 +520,31 @@ class OrdinaryKriging:
             b[zero_index[0], zero_index[1], 0] = 0.0
         b[:, n, 0] = 1.0
 
+        #if np.inf in b:
+        #    print('exec_vector: inf in b 1')
+
         if (~mask).any():
             mask_b = np.repeat(mask[:, np.newaxis, np.newaxis], n+1, axis=1)
             b = np.ma.array(b, mask=mask_b)
+            #print('exec_vector: masked')
 
-        x = np.dot(a_inv, b.reshape((npt, n+1)).T).reshape((1, n+1, npt)).T
+        #if np.inf in b:
+        #    print('exec_vector: inf in b 2')
+
+        # a: array(n+1,n+1)
+        # x = np.dot(a_inv, b.reshape((npt, n+1)).T) .reshape((1, n+1, npt)).T
+
+        # a x = b
+        # x = np.linalg.solve(a,b)
+        # x = np.linalg.lstsq(a,b)
+        x = np.linalg.solve(a, b.reshape((npt, n+1)).T) .reshape((1, n+1, npt)).T
+
+        #if np.inf in x:
+        #    print('exec_vector: inf in x')
+
+        #if np.inf in self.Z:
+        #    print('exec_vector: inf in self.Z')
+            
         zvalues = np.sum(x[:, :n, 0] * self.Z, axis=1)
         sigmasq = np.sum(x[:, :, 0] * -b[:, :, 0], axis=1)
 
@@ -579,7 +618,8 @@ class OrdinaryKriging:
         return zvalues, sigmasq
 
     def execute(self, style, xpoints, ypoints, mask=None, backend='vectorized',
-                n_closest_points=None,coordinates='euclidean'):
+                n_closest_points=None):
+        #mlr-- ,coordinates='euclidean'):
         """Calculates a kriged grid and the associated variance.
 
         This is now the method that performs the main kriging calculation.
@@ -673,7 +713,12 @@ class OrdinaryKriging:
         n = self.X_ADJUSTED.shape[0]
         nx = xpts.size
         ny = ypts.size
-        a = self._get_kriging_matrix(n,coordinates=coordinates)
+        # mlr--
+        # a = self._get_kriging_matrix(n,coordinates=coordinates)
+        #??? a = self._get_kriging_matrix(n)
+        a = self._get_kriging_matrix(n)
+        # mlr? a here...
+        #??? a = self._get_kriging_matrix(n,coordinates=self.coordinates_type)
 
         if style in ['grid', 'masked']:
             if style == 'masked':
@@ -719,7 +764,8 @@ class OrdinaryKriging:
             # use the existing (euclidean) infrastructure for nearest neighbour
             # search and distance calculation in euclidean three space and
             # convert distances to great circle distances afterwards.
-            
+
+            # 3-D versions
             lon_d = self.X_ADJUSTED[:, np.newaxis] * np.pi / 180.0
             lat_d = self.Y_ADJUSTED[:, np.newaxis] * np.pi / 180.0
             xy_data = np.concatenate((np.cos(lon_d) * np.cos(lat_d),
@@ -732,12 +778,18 @@ class OrdinaryKriging:
                                         np.sin(lat_p)), axis=1)
 
             # Packed-complex version. 
-            xy_data_c   = self.X_ADJUSTED + 1j*self.Y_ADJUSTED
+            # mlr can we comment out this 'xy_data_c   = self.X_ADJUSTED + 1j*self.Y_ADJUSTED' for the following?
+            xy_data_c   = self.XY_PACKED
+            # mlr This part is new...
             xy_points_c = xpts + 1j*ypts
-            a = self._get_kriging_matrix(n,xy_data_c,coordinates=self.coordinates_type)
+            # mlr? and a here too?
+            # mlr-- a = self._get_kriging_matrix(n,xy_data_c,coordinates=self.coordinates_type)
+            # mlr the following acts on self.XY_PACKED, so it's already done...
+            # a = self._get_kriging_matrix(n)
+            # mlr? print('ok check xy: '+str(np.nanmax(np.absolute(xy_data_c-self.XY_PACKED))))
             
-
         if style != 'masked':
+            # print('ok: style not masked, setting mask to False')
             mask = np.zeros(npt, dtype='bool')
 
         c_pars = None
@@ -781,12 +833,20 @@ class OrdinaryKriging:
                 # Convert euclidean distances to great circle distances:
                 # Note: xy_points_c & xy_data_c are in a packed-complex format
                 # Note: Using packed-complex because cdist won't work
-                bd = core.great_circle_distance_c(xy_points_c[:,np.newaxis],xy_data_c)
+                if True:
+                    # print('ok:  900 using xy_packed')
+                    bd = core.great_circle_distance_c(xy_points_c[:,np.newaxis],xy_data_c)
+                else:
+                    # print('ok: 901 not using xy_packed')
+                    bd = cdist(xy_points,  xy_data, 'euclidean')                
+                    bd = core.euclid3_to_great_circle(bd)
+                
             else:
                 raise ValueError("Only 'euclidean' and 'geographic' are valid "
                                  "values for coordinates-keyword.")
             
             if backend == 'vectorized':
+                # print('ok: 1000')
                 zvalues, sigmasq = self._exec_vector(a, bd, mask)
             elif backend == 'loop':
                 zvalues, sigmasq = self._exec_loop(a, bd, mask)

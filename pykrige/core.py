@@ -92,7 +92,7 @@ def great_circle_distance(lon1, lat1, lon2, lat2):
     return 180.0 / np.pi * np.arctan2(np.sqrt((c2*np.sin(dlon))**2 + (c1*s2-s1*c2*cd)**2), s1*s2+c1*c2*cd)
 
 def great_circle_distance_c(lonlat1, lonlat2):
-    """Returns the great circle distance between points in the compplex
+    """Returns the great circle distance between points in the complex
 inputs lonlat1 and lonlat2. Points are encoded in the input arrays as
 (lon_degrees+I*lat_degrees). This is done to support vectorized calls
 in the calculation of all-pairs of distances.

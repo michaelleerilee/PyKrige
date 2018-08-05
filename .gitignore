@@ -11,6 +11,7 @@ dist/*
 doc/examples/
 doc/generated/
 doc/modules/
+files.txt
 
 examples/meuse_example_data/*
 *.ipynb_checkpoints/*
