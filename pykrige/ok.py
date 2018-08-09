@@ -537,7 +537,15 @@ class OrdinaryKriging:
         # a x = b
         # x = np.linalg.solve(a,b)
         # x = np.linalg.lstsq(a,b)
-        x = np.linalg.solve(a, b.reshape((npt, n+1)).T) .reshape((1, n+1, npt)).T
+        # TODO: Add a try clause to catch singular matrix exception.
+        try:
+            x = np.linalg.solve(a, b.reshape((npt, n+1)).T) .reshape((1, n+1, npt)).T
+        except np.linalg.linalg.LinAlgError as err:
+            print('_exec_vector: np.linalg.solve failed, trying lstsq. ')
+            print('_exec_vector: ***UNTESTED*** ***UNVERIFIED***')
+            print(err.message)
+            x,s,rank,sing_values = np.linalg.lstsq(a, b.reshape((npt, n+1)).T)
+            x = x.reshape((1, n+1, npt)).T            
 
         #if np.inf in x:
         #    print('exec_vector: inf in x')
