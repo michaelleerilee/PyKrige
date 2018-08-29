@@ -499,7 +499,8 @@ class OrdinaryKriging:
         zero_index = None
         zero_value = False
 
-        #mlr print('_exec_vector: det(a): '+str(scipy.linalg.det(a)))
+        if self.verbose:
+            print('_exec_vector: det(a): '+str(scipy.linalg.det(a)))
 
         #if np.inf in a:
         #    print('exec_vector: inf in a')
