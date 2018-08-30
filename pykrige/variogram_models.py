@@ -18,6 +18,9 @@ Function definitions for variogram models. In each function, m is a list of
 defining parameters and d is an array of the distance values at which to
 calculate the variogram model.
 
+Provides a dictionary of variogram models to which an end user may add
+their own custom models, which are then treated on par with provided models.
+
 References
 ----------
 .. [1] P.K. Kitanidis, Introduction to Geostatistcs: Applications in
