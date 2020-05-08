@@ -2,6 +2,7 @@
 .pytest_cache/
 *.egg-info/
 build/
+root.d/
 doc/_build/
 *.swp
 .idea/*

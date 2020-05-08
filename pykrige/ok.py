@@ -493,6 +493,9 @@ class OrdinaryKriging:
         can take a lot of memory for large grids and/or large datasets."""
 
         #mlr print('exec_vector')
+
+        print('_exec_vector: a.shape,strides: ',a.shape,a.strides)
+        print('_exec_vector: bd.shape,strides: ',bd.shape,bd.strides)
         
         npt = bd.shape[0]
         n = self.X_ADJUSTED.shape[0]
@@ -539,8 +542,13 @@ class OrdinaryKriging:
         # x = np.linalg.solve(a,b)
         # x = np.linalg.lstsq(a,b)
         # TODO: Add a try clause to catch singular matrix exception.
+        print('_exec_vectorized+linalg.solve')
         try:
-            x = np.linalg.solve(a, b.reshape((npt, n+1)).T) .reshape((1, n+1, npt)).T
+            # x = np.linalg.solve(a, b.reshape((npt, n+1)).T) .reshape((1, n+1, npt)).T
+            brT = b.reshape((npt, n+1)).T
+            x = np.linalg.solve(a, brT) .reshape((1, n+1, npt)).T
+            # a_inv = scipy.linalg.inv(a)
+            # Didn't work? x = np.dot(a_inv,      b.reshape((npt, n+1)).T) .reshape((1, n+1, npt)).T
         except np.linalg.linalg.LinAlgError as err:
             print('_exec_vector: np.linalg.solve failed, trying lstsq. ')
             print('_exec_vector: ***UNTESTED*** ***UNVERIFIED***')
@@ -553,9 +561,23 @@ class OrdinaryKriging:
 
         #if np.inf in self.Z:
         #    print('exec_vector: inf in self.Z')
-            
-        zvalues = np.sum(x[:, :n, 0] * self.Z, axis=1)
-        sigmasq = np.sum(x[:, :, 0] * -b[:, :, 0], axis=1)
+
+        print('_exec_vector: Z.shape,strides: ',self.Z.shape,self.Z.strides)
+        zvalues = np.zeros((npt))
+        zvalues[:] = np.sum(x[:, :n, 0] * self.Z, axis=1)
+        
+        print('_exec_vector: x.shape, strides: ',x.shape,x.strides)
+        print('_exec_vector: b.shape, strides: ',b.shape,b.strides)
+        # mlr - maybe the following is wrong.
+        # sigmasq = np.sum(x[:, :, 0] * -b[:, :, 0], axis=1)
+        sigmasq = np.zeros((npt))
+        sigmasq[:] = np.sum(x[:, :, 0] * -b[:, :, 0], axis=1)
+        # brT0 = b.reshape((npt, n+1)).T
+        # brT1 = brT0.reshape((1,n+1,npt)).T
+        # print('_exec_vector: brT1.shape, strides: ',brT1.shape,brT1.strides)
+        # sigmasq[:] = np.sum(x[:, :, 0] * -brT1[:, :, 0], axis=1)
+        print('_exec_vector: sigmasq.shape, strides: ',sigmasq.shape,sigmasq.strides)
+        print('_exec_vector: zvalues.shape, strides: ',zvalues.shape,zvalues.strides)
 
         return zvalues, sigmasq
 
@@ -567,6 +589,8 @@ class OrdinaryKriging:
         n = self.X_ADJUSTED.shape[0]
         zvalues = np.zeros(npt)
         sigmasq = np.zeros(npt)
+
+        print('_exec_loop+inverse-and-dot')
 
         a_inv = scipy.linalg.inv(a)
 
@@ -585,6 +609,7 @@ class OrdinaryKriging:
                 b[zero_index[0], 0] = 0.0
             b[n, 0] = 1.0
             x = np.dot(a_inv, b)
+            # x = np.linalg.solve(a, b)
             zvalues[j] = np.sum(x[:n, 0] * self.Z)
             sigmasq[j] = np.sum(x[:, 0] * -b[:, 0])
 
@@ -845,6 +870,10 @@ class OrdinaryKriging:
                 if True:
                     # print('ok:  900 using xy_packed')
                     bd = core.great_circle_distance_c(xy_points_c[:,np.newaxis],xy_data_c)
+                    #bd = core.great_circle_distance(xpts[:,np.newaxis]\
+                    #                                ,ypts[:,np.newaxis]\
+                    #                                ,self.X_ADJUSTED[:,np.newaxis]\
+                    #                                ,self.Y_ADJUSTED[:,np.newaxis])
                 else:
                     # print('ok: 901 not using xy_packed')
                     bd = cdist(xy_points,  xy_data, 'euclidean')                
